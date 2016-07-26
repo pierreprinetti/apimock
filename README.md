@@ -1,4 +1,4 @@
-# mockapi
+# apimock
 
 This is a minimal fake API server.
 
