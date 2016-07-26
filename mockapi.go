@@ -76,7 +76,7 @@ func main() {
 	r.HandleFunc("/{path:.*}", deleteHandler).Methods("POST")
 	r.HandleFunc("/{path:.*}", optionsHandler).Methods("OPTIONS")
 	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe("localhost:8800", nil))
+	log.Fatal(http.ListenAndServe(host, nil))
 }
 
 func init() {
