@@ -8,7 +8,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var content map[string][]byte
+var store map[string][]byte
 
 func check(err error) {
 	if err != nil {
@@ -27,7 +27,7 @@ func notImplemented(w http.ResponseWriter, r *http.Request) {
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
-	value, ok := content[path]
+	value, ok := store[path]
 
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
@@ -47,7 +47,7 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	value, err := ioutil.ReadAll(r.Body)
 	check(err)
 
-	content[path] = value
+	store[path] = value
 	w.WriteHeader(http.StatusOK)
 	_, err = w.Write(value)
 	check(err)
@@ -58,7 +58,15 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	path := mux.Vars(r)["path"]
+
+	if _, ok := store[path]; !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+
+	delete(store, path)
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func optionsHandler(w http.ResponseWriter, r *http.Request) {
@@ -73,12 +81,12 @@ func main() {
 	r.HandleFunc("/{path:.*}", headHandler).Methods("HEAD")
 	r.HandleFunc("/{path:.*}", putHandler).Methods("PUT")
 	r.HandleFunc("/{path:.*}", postHandler).Methods("POST")
-	r.HandleFunc("/{path:.*}", deleteHandler).Methods("POST")
+	r.HandleFunc("/{path:.*}", deleteHandler).Methods("DELETE")
 	r.HandleFunc("/{path:.*}", optionsHandler).Methods("OPTIONS")
 	http.Handle("/", r)
 	log.Fatal(http.ListenAndServe(host, nil))
 }
 
 func init() {
-	content = make(map[string][]byte)
+	store = make(map[string][]byte)
 }
