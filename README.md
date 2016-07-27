@@ -25,7 +25,7 @@ It is meant for prototyping. **Please do NOT use _apimock_ in production**.
 ## Features
 
 It currently supports:
-- [x] CORS headers (responses always bear `Allow-Origin: *` and `Allow-Headers: *` headers)
+- [x] CORS headers (responses always bear `Allow-Origin: *` and a bunch of authorized headers and methods)
 - [x] `OPTIONS`
 - [x] `PUT`
 - [x] `GET`
