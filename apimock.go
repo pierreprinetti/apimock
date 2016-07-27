@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 )
 
@@ -69,22 +70,21 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func optionsHandler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
-}
+func optionsHandler(w http.ResponseWriter, r *http.Request) {}
 
 func main() {
-	r := mux.NewRouter()
+	router := mux.NewRouter()
 	// r.HandleFunc("/", HomeHandler)
-	r.HandleFunc("/{path:.*}", getHandler).Methods("GET")
-	r.HandleFunc("/{path:.*}", headHandler).Methods("HEAD")
-	r.HandleFunc("/{path:.*}", putHandler).Methods("PUT")
-	r.HandleFunc("/{path:.*}", postHandler).Methods("POST")
-	r.HandleFunc("/{path:.*}", deleteHandler).Methods("DELETE")
-	r.HandleFunc("/{path:.*}", optionsHandler).Methods("OPTIONS")
-	http.Handle("/", r)
-	log.Fatal(http.ListenAndServe(host, nil))
+	router.HandleFunc("/{path:.*}", getHandler).Methods("GET")
+	router.HandleFunc("/{path:.*}", headHandler).Methods("HEAD")
+	router.HandleFunc("/{path:.*}", putHandler).Methods("PUT")
+	router.HandleFunc("/{path:.*}", postHandler).Methods("POST")
+	router.HandleFunc("/{path:.*}", deleteHandler).Methods("DELETE")
+	router.HandleFunc("/{path:.*}", optionsHandler).Methods("OPTIONS")
+
+	n := negroni.New(negroni.NewRecovery(), newCors())
+	n.UseHandler(router)
+	n.Run(host)
 }
 
 func init() {
