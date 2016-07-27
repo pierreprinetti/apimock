@@ -5,7 +5,9 @@ This is a very basic fake API server. I use it to build the front-end of web app
 It is an in-memory, non-persistent key-value store you can fill with `PUT` requests, where the request path is the key and the request body is the value.
 Retrieve the saved value with a subsequent `GET` request at the same endpoint.
 
-Example:
+It is meant for prototyping. **Please do NOT use _apimock_ in production**.
+
+## Example:
 
     $ HOST=localhost:8800 apimock &
     $ curl -X PUT -d '{"message": "This is not a pipe"}' localhost:8800/my/endpoint
@@ -15,6 +17,12 @@ Example:
     $ curl -X DELETE localhost:8800/my/endpoint
     $ curl -X GET localhost:8800/my/endpoint
     $
+
+## Docker container
+
+    docker run --name apimock -p 8800:80 -d pierreprinetti/apimock:latest
+
+## Features
 
 It currently supports:
 - [x] `PUT`
