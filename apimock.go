@@ -70,7 +70,9 @@ func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func optionsHandler(w http.ResponseWriter, r *http.Request) {}
+func optionsHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusNoContent)
+}
 
 func main() {
 	router := mux.NewRouter()

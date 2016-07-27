@@ -11,7 +11,11 @@ func newCors() *Cors {
 }
 
 func (l *Cors) ServeHTTP(w http.ResponseWriter, r *http.Request, next http.HandlerFunc) {
+	if r.Method == "OPTIONS" {
+		w.Header().Set("Access-Control-Max-Age", "1728000") // Pre-flight info is valid for 20 days
+	}
 	w.Header().Set("Access-Control-Allow-Origin", "*")
-	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "GET, PUT, POST, DELETE, HEAD, OPTIONS")
+	w.Header().Set("Access-Control-Allow-Headers", "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,X-Api-Key,If-Modified-Since,Cache-Control,Content-Type")
 	next(w, r)
 }
