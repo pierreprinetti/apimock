@@ -17,10 +17,11 @@ Example:
     $
 
 It currently supports:
-- `PUT`
-- `GET`
-- `DELETE`
+- [x] `PUT`
+- [x] `GET`
+- [x] `DELETE`
 
 What it might support in the future:
-- `POST` to an endpoint with fake ID generator (e.g. `POST` to `example.com/items` would result in the storage of the element in `example.com/items/1`
+- [ ] `Content-Type` headers
+- [ ] `POST` to an endpoint with fake ID generator (e.g. `POST` to `example.com/items` would result in the storage of the element in `example.com/items/1`
 
