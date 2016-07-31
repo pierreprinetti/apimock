@@ -5,7 +5,7 @@ import "net/http"
 // Cors is a middleware handler that adds Cross-Origin-Resource-Sharing headers.
 type Cors struct{}
 
-// NewCors returns a new Cors instance
+// newCors returns a new Cors instance
 func newCors() *Cors {
 	return new(Cors)
 }
