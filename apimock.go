@@ -9,7 +9,19 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var store map[string][]byte
+var store map[string]entry
+
+type entry struct {
+	Value       []byte
+	ContentType string
+}
+
+func set(key string, value []byte, contentType string) {
+	if contentType == "" {
+		contentType = defaultContentType
+	}
+	store[key] = entry{Value: value, ContentType: contentType}
+}
 
 func check(err error) {
 	if err != nil {
@@ -28,14 +40,15 @@ func notImplemented(w http.ResponseWriter, r *http.Request) {
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
-	value, ok := store[path]
+	e, ok := store[path]
 
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
 	}
 
-	_, err := w.Write(value)
+	w.Header().Set("Content-Type", e.ContentType)
+	_, err := w.Write(e.Value)
 	check(err)
 }
 
@@ -48,10 +61,9 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	value, err := ioutil.ReadAll(r.Body)
 	check(err)
 
-	store[path] = value
-	w.WriteHeader(http.StatusOK)
-	_, err = w.Write(value)
-	check(err)
+	set(path, value, r.Header.Get("Content-Type"))
+
+	getHandler(w, r)
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
@@ -90,5 +102,5 @@ func main() {
 }
 
 func init() {
-	store = make(map[string][]byte)
+	store = make(map[string]entry)
 }

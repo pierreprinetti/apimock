@@ -5,6 +5,8 @@ This is a very basic fake API server. I use it to build the front-end of web app
 It is an in-memory, non-persistent key-value store you can fill with `PUT` requests, where the request path is the key and the request body is the value.
 Retrieve the saved value with a subsequent `GET` request at the same endpoint.
 
+*apimock* will serve back the same `Content-Type` is has received. If no `Content-Type` header was sent with the `PUT` request, the `DEFAULT_CONTENT_TYPE` environment variable will be sent.
+
 It is meant for prototyping. **Please do NOT use _apimock_ in production**.
 
 ## Example:
@@ -30,8 +32,7 @@ It currently supports:
 - [x] `PUT`
 - [x] `GET`
 - [x] `DELETE`
+- [x] `Content-Type` header
 
 What it might support in the future:
-- [ ] `Content-Type` headers
 - [ ] `POST` to an endpoint with fake ID generator (e.g. `POST` to `example.com/items` would result in the storage of the element in `example.com/items/1`
-
