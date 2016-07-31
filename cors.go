@@ -2,7 +2,7 @@ package main
 
 import "net/http"
 
-// Cors is a middleware handler that logs the request as it goes in and the response as it goes out.
+// Cors is a middleware handler that adds Cross-Origin-Resource-Sharing headers.
 type Cors struct{}
 
 // NewCors returns a new Cors instance
