@@ -17,8 +17,12 @@ type entry struct {
 }
 
 func set(key string, value []byte, contentType string) {
-	if contentType == "" {
-		contentType = defaultContentType
+	if overrideContentType != "" {
+		contentType = overrideContentType
+	} else {
+		if contentType == "" {
+			contentType = defaultContentType
+		}
 	}
 	store[key] = entry{Value: value, ContentType: contentType}
 }
@@ -96,11 +100,14 @@ func main() {
 	router.HandleFunc("/{path:.*}", deleteHandler).Methods("DELETE")
 	router.HandleFunc("/{path:.*}", optionsHandler).Methods("OPTIONS")
 
-	n := negroni.New(negroni.NewRecovery(), newCors())
+	n := negroni.New(negroni.NewRecovery(), newCors(), newLogger())
 	n.UseHandler(router)
 	n.Run(host)
 }
 
 func init() {
 	store = make(map[string]entry)
+	if overrideContentType != "" {
+
+	}
 }
