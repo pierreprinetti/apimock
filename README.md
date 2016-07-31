@@ -1,4 +1,5 @@
 # apimock
+[![Build Status](https://travis-ci.org/pierreprinetti/apimock.svg?branch=master)](https://travis-ci.org/pierreprinetti/apimock)
 
 This is a very basic fake API server. I use it to build the front-end of web applications, without the need for the backend to be ready.
 
