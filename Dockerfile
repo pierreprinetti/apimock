@@ -1,4 +1,5 @@
 FROM golang:1.6-onbuild
 
-EXPOSE 80
+MAINTAINER Pierre Prinetti <me@qrawl.net>
 
+EXPOSE 80
