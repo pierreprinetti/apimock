@@ -21,6 +21,12 @@ It is meant for prototyping. **Please do NOT use _apimock_ in production**.
     $ curl -X GET localhost:8800/my/endpoint
     $
 
+## Content-Type
+Apimock will remember the `Content-Type` associated with every request. This behaviour can be modified with the environment variables:
+
+- `DEFAULT_CONTENT_TYPE`: When the `PUT` request doesn't bear a `Content-Type`, this one will be used. If not specified, this is `text/plain`.
+- `FORCED_CONTENT_TYPE`: The specified string will be used as `Content-Type` no matter what is transmitted with the `PUT` request.
+
 ## Docker container
 
     docker run --name apimock -p 8800:80 -d pierreprinetti/apimock:latest
