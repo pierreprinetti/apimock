@@ -3,5 +3,6 @@ engines:
   fixme:
     enabled: true
 ratings:
-  paths: []
+  paths:
+  - "**.go" 
 exclude_paths: []
