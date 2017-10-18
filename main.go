@@ -4,12 +4,15 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
+	"strings"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
 )
 
 var store map[string]entry
+var pathIds map[string][]string
 
 type entry struct {
 	Value       []byte
@@ -45,7 +48,6 @@ func notImplemented(w http.ResponseWriter, r *http.Request) {
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
 	e, ok := store[path]
-
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -53,6 +55,12 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", e.ContentType)
 	_, err := w.Write(e.Value)
+	check(err)
+}
+
+func errNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusMethodNotAllowed)
+	_, err := w.Write([]byte("Not allowed"))
 	check(err)
 }
 
@@ -70,8 +78,34 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	getHandler(w, r)
 }
 
+// Generates the id for a new element
+func idGenerator(path string) (newid string) {
+	if val, ok  := pathIds[path]; ok {
+		newid = strconv.Itoa(len(val))
+	} else {
+		newid = "0"
+	}
+	pathIds[path] = append(pathIds[path], newid)
+	return
+}	
+
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	path := mux.Vars(r)["path"]
+	if path[len(path)-1:] == "/" {
+		errNotAllowedHandler(w, r)
+	} else {
+		// generating an id for the new element
+		pathParent :=  path[:strings.LastIndex(path, "/")]+"/"
+		newid := idGenerator(pathParent)
+		
+		// generating headers
+		w.Header().Add("Location",path+"/"+newid)
+		w.WriteHeader(http.StatusCreated)
+
+		mux.Vars(r)["path"] = path+"/"+newid
+
+		putHandler(w, r)
+	}
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
@@ -107,6 +141,7 @@ func main() {
 
 func init() {
 	store = make(map[string]entry)
+	pathIds = make(map[string][]string)
 	if overrideContentType != "" {
 
 	}
