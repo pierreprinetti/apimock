@@ -12,11 +12,16 @@ import (
 )
 
 var store map[string]entry
-var pathIds map[string][]string
+var pathIds map[string]pathEntry
 
 type entry struct {
 	Value       []byte
 	ContentType string
+}
+
+type pathEntry struct {
+	Value		[]string
+	LastId		int
 }
 
 func set(key string, value []byte, contentType string) {
@@ -80,12 +85,15 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 
 // Generates the id for a new element
 func idGenerator(path string) (newid string) {
+	entry := *new(pathEntry)
 	if val, ok  := pathIds[path]; ok {
-		newid = strconv.Itoa(len(val))
-	} else {
-		newid = "0"
+		entry = val
 	}
-	pathIds[path] = append(pathIds[path], newid)
+	entry.LastId = entry.LastId+1
+	newid = strconv.Itoa(entry.LastId)
+	entry.Value = append(pathIds[path].Value, newid)
+	pathIds[path] = entry
+
 	return
 }	
 
@@ -141,7 +149,7 @@ func main() {
 
 func init() {
 	store = make(map[string]entry)
-	pathIds = make(map[string][]string)
+	pathIds = make(map[string]pathEntry)
 	if overrideContentType != "" {
 
 	}
