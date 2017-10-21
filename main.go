@@ -1,11 +1,11 @@
 package main
 
 import (
+	"encoding/json"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"github.com/codegangsta/negroni"
 	"github.com/gorilla/mux"
@@ -23,6 +23,12 @@ type pathEntry struct {
 	Value		[]string
 	LastId		int
 }
+
+type pathMessage struct {
+	EndpointName	string
+	Items			[]string
+}
+
 
 func set(key string, value []byte, contentType string) {
 	if overrideContentType != "" {
@@ -50,17 +56,44 @@ func notImplemented(w http.ResponseWriter, r *http.Request) {
 	check(err)
 }
 
-func getHandler(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
-	e, ok := store[path]
-	if !ok {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
+func notFoundHandler(w http.ResponseWriter) {
+	w.WriteHeader(http.StatusNotFound)
+}
 
+func errHandler(w http.ResponseWriter, err error){
+	w.WriteHeader(http.StatusInternalServerError)
+	_, err2 := w.Write([]byte(err.Error()))
+	check(err2)
+}
+
+func getSuccessHandler(w http.ResponseWriter, e entry){
 	w.Header().Set("Content-Type", e.ContentType)
 	_, err := w.Write(e.Value)
 	check(err)
+}
+
+func getHandler(w http.ResponseWriter, r *http.Request) {
+	path := mux.Vars(r)["path"]
+	if len(path)>0 && path[len(path)-1:] == "/"{
+		pthId, ok := pathIds[path]
+		if !ok {
+			notFoundHandler(w)
+		}
+		j_m, err := json.Marshal(pathMessage{path, pthId.Value})
+		if err != nil {
+			errHandler(w,err)
+		}
+		getSuccessHandler(w, entry{[]byte(j_m), "application/json"})
+
+	} else {
+		e, ok := store[path]
+		if !ok {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		getSuccessHandler(w, e)
+	}
+	notFoundHandler(w)
 }
 
 func errNotAllowedHandler(w http.ResponseWriter, r *http.Request) {
@@ -83,7 +116,7 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 	getHandler(w, r)
 }
 
-// Generates the id for a new element
+// Generates and stores the id for a new element
 func idGenerator(path string) (newid string) {
 	entry := *new(pathEntry)
 	if val, ok  := pathIds[path]; ok {
@@ -93,7 +126,7 @@ func idGenerator(path string) (newid string) {
 	newid = strconv.Itoa(entry.LastId)
 	entry.Value = append(pathIds[path].Value, newid)
 	pathIds[path] = entry
-
+	log.Print(path, pathIds[path])
 	return
 }	
 
@@ -103,8 +136,7 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		errNotAllowedHandler(w, r)
 	} else {
 		// generating an id for the new element
-		pathParent :=  path[:strings.LastIndex(path, "/")]+"/"
-		newid := idGenerator(pathParent)
+		newid := idGenerator(path+"/")
 		
 		// generating headers
 		w.Header().Add("Location",path+"/"+newid)
