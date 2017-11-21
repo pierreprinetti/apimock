@@ -20,15 +20,14 @@ type entry struct {
 }
 
 type pathEntry struct {
-	Value		[]string
-	LastId		int
+	Value  []string
+	LastId int
 }
 
 type pathMessage struct {
-	EndpointName	string
-	Items			[]string
+	EndpointName string
+	Items        []string
 }
-
 
 func set(key string, value []byte, contentType string) {
 	if overrideContentType != "" {
@@ -60,13 +59,13 @@ func notFoundHandler(w http.ResponseWriter) {
 	w.WriteHeader(http.StatusNotFound)
 }
 
-func errHandler(w http.ResponseWriter, err error){
+func errHandler(w http.ResponseWriter, err error) {
 	w.WriteHeader(http.StatusInternalServerError)
 	_, err2 := w.Write([]byte(err.Error()))
 	check(err2)
 }
 
-func getSuccessHandler(w http.ResponseWriter, e entry){
+func getSuccessHandler(w http.ResponseWriter, e entry) {
 	w.Header().Set("Content-Type", e.ContentType)
 	_, err := w.Write(e.Value)
 	check(err)
@@ -74,14 +73,14 @@ func getSuccessHandler(w http.ResponseWriter, e entry){
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
-	if len(path)>0 && path[len(path)-1:] == "/"{
+	if len(path) > 0 && path[len(path)-1:] == "/" {
 		pthId, ok := pathIds[path]
 		if !ok {
 			notFoundHandler(w)
 		}
 		j_m, err := json.Marshal(pathMessage{path, pthId.Value})
 		if err != nil {
-			errHandler(w,err)
+			errHandler(w, err)
 		}
 		getSuccessHandler(w, entry{[]byte(j_m), "application/json"})
 
@@ -119,16 +118,16 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 // Generates and stores the id for a new element
 func idGenerator(path string) (newid string) {
 	entry := *new(pathEntry)
-	if val, ok  := pathIds[path]; ok {
+	if val, ok := pathIds[path]; ok {
 		entry = val
 	}
-	entry.LastId = entry.LastId+1
+	entry.LastId = entry.LastId + 1
 	newid = strconv.Itoa(entry.LastId)
 	entry.Value = append(pathIds[path].Value, newid)
 	pathIds[path] = entry
 	log.Print(path, pathIds[path])
 	return
-}	
+}
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
@@ -136,13 +135,13 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 		errNotAllowedHandler(w, r)
 	} else {
 		// generating an id for the new element
-		newid := idGenerator(path+"/")
-		
+		newid := idGenerator(path + "/")
+
 		// generating headers
-		w.Header().Add("Location",path+"/"+newid)
+		w.Header().Add("Location", path+"/"+newid)
 		w.WriteHeader(http.StatusCreated)
 
-		mux.Vars(r)["path"] = path+"/"+newid
+		mux.Vars(r)["path"] = path + "/" + newid
 
 		putHandler(w, r)
 	}
