@@ -2,7 +2,9 @@ package main
 
 import (
 	//"encoding/json"
+	"fmt"//TODO
 	"io/ioutil"
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,18 +20,19 @@ type entry struct {
 	ContentType string
 }
 
+// this is the resource that will represent a collection of resources
 type pathMessage struct {
-	EndpointName string
-	Items        []string
+	Resources	[]string
 }
 
-var resourcesMap map[string][]string
-
 // returns the path as used inside the program
-func getPath(r *http.Request) string {
+func getPath(r *http.Request, trim bool) string {
 	//path := mux.Vars(r)["path"]
 	path := r.URL.Path
-	return strings.Trim(path, "/")
+	if trim {
+		return strings.Trim(path, "/")
+	}
+	return path
 }
 
 // set syncronizes the data in the internal store with the given 
@@ -60,17 +63,21 @@ func checkBody(r *http.Request) []byte {
 
 // idGenerator generates and stores the id for a new element
 func idGenerator(path string) (newId string) {
-	/*entry := *new(pathEntry)
-	if val, ok := pathIds[path]; ok {
-		entry = val
+	message, _ := store[path]
+	var parsed_message pathMessage
+	err := json.Unmarshal(message.Value, &parsed_message)
+	if err != nil {
+		parsed_message = pathMessage { nil }
 	}
-	entry.LastId = entry.LastId + 1
-	newid = strconv.Itoa(entry.LastId)
-	entry.Value = append(pathIds[path].Value, newid)
-	pathIds[path] = entry
-	log.Print(path, pathIds[path])*/
-	newId = strconv.Itoa(len(resourcesMap[path]))
-	resourcesMap[path] = append(resourcesMap[path], newId)
+	newId = strconv.Itoa(len(parsed_message.Resources))
+	parsed_message.Resources = append(parsed_message.Resources, newId)
+	j, err :=  json.Marshal(parsed_message)
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(parsed_message.Resources, "---")
+	fmt.Println("updating index in ",path)
+	set(path, j, "application/json")
 	return
 }
 
@@ -100,8 +107,9 @@ func getSuccessHandler(w http.ResponseWriter, e entry) {
 }
 
 func getHandler(w http.ResponseWriter, r *http.Request) {
-	path := getPath(r)
+	path := getPath(r, false)
 	e, ok := store[path]
+	fmt.Println(store)
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -110,12 +118,13 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	path := getPath(r)
+	path := getPath(r, true)
 	value := checkBody(r)
 	
 	// generating an id and url for the new element
 	newid := idGenerator(path)
 	url := path+"/"+newid
+	fmt.Println("putting new element in ",url,value)
 
 	// generating headers
 	w.Header().Add("Location", url)
@@ -179,7 +188,6 @@ func main() {
 
 func init() {
 	store = make(map[string]entry)
-	resourcesMap = make(map[string][]string)
 	if overrideContentType != "" {
 
 	}

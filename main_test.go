@@ -45,10 +45,16 @@ func TestPostHandler(t *testing.T) {
 	url := "/my/endpoint"
 	r := doATest(t, "POST",url, 201, body, res_body)
 	assert(t, "location", "/"+r.Header.Get("location"), url+"/0")
-	res_body = `{"this":"is an example2"}`
-	body = res_body
-	r = doATest(t, "POST",url, 201, body, res_body)
+	res_body2 := `{"this":"is an example2"}`
+	body = res_body2
+	r = doATest(t, "POST",url, 201, body, res_body2)
 	assert(t, "location", "/"+r.Header.Get("location"), url+"/1")
+	_ = doATest(t, "GET", "/my/endpoint/1", 200, "", res_body2)
+	_ = doATest(t, "GET", "/my/endpoint/0", 200, "", res_body)
+
+	// TODO
+	resources_body := "{\"resources\":[\"0\",\"1\"]}"
+	_ = doATest(t, "GET", "/my/endpoint", 200, "", resources_body)
 }
 
 func TestMain(m *testing.M){
