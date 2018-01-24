@@ -2,7 +2,6 @@ package main
 
 import (
 	//"encoding/json"
-	"fmt"//TODO
 	"io/ioutil"
 	"encoding/json"
 	"log"
@@ -72,12 +71,7 @@ func idGenerator(path string) (newID int) {
 	}
 	newID = len(parsedMessage.Resources)
 	parsedMessage.Resources = append(parsedMessage.Resources, newID)
-	j, err :=  json.Marshal(parsedMessage)
-	if err != nil {
-		fmt.Println(err)
-	}
-	//fmt.Println(parsedMessage.Resources, "---")
-	fmt.Println("updating index in ",path,"with",newID)
+	j, _ :=  json.Marshal(parsedMessage)
 	set(path, j, "application/json")
 	return
 }
@@ -110,7 +104,6 @@ func getSuccessHandler(w http.ResponseWriter, e entry) {
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := getPath(r, false)
 	e, ok := store[path]
-	fmt.Println("###", path, store, store[path])
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -125,12 +118,10 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	// generating an id and url for the new element
 	newid := idGenerator(path)
 	url := path+"/"+strconv.Itoa(newid)
-	fmt.Println("putting new element in ",url,value)
 
 	// generating headers
 	w.Header().Add("Location", url)
 	w.WriteHeader(http.StatusCreated)
-  fmt.Println("----------",url)
 	set(url, value, r.Header.Get("Content-Type"))
 	w.Write(value)
 }
