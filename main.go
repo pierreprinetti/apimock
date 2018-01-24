@@ -21,8 +21,9 @@ type entry struct {
 }
 
 // this is the resource that will represent a collection of resources
+// and will be just like {0, 1, ... }
 type pathMessage struct {
-	Resources	[]string
+	Resources	[]int
 }
 
 // returns the path as used inside the program
@@ -30,7 +31,7 @@ func getPath(r *http.Request, trim bool) string {
 	//path := mux.Vars(r)["path"]
 	path := r.URL.Path
 	if trim {
-		return strings.Trim(path, "/")
+		return strings.TrimRight(path, "/")
 	}
 	return path
 }
@@ -62,21 +63,21 @@ func checkBody(r *http.Request) []byte {
 }
 
 // idGenerator generates and stores the id for a new element
-func idGenerator(path string) (newId string) {
+func idGenerator(path string) (newID int) {
 	message, _ := store[path]
-	var parsed_message pathMessage
-	err := json.Unmarshal(message.Value, &parsed_message)
+	var parsedMessage pathMessage
+	err := json.Unmarshal(message.Value, &parsedMessage)
 	if err != nil {
-		parsed_message = pathMessage { nil }
+		parsedMessage = pathMessage { nil }
 	}
-	newId = strconv.Itoa(len(parsed_message.Resources))
-	parsed_message.Resources = append(parsed_message.Resources, newId)
-	j, err :=  json.Marshal(parsed_message)
+	newID = len(parsedMessage.Resources)
+	parsedMessage.Resources = append(parsedMessage.Resources, newID)
+	j, err :=  json.Marshal(parsedMessage)
 	if err != nil {
 		fmt.Println(err)
 	}
-	fmt.Println(parsed_message.Resources, "---")
-	fmt.Println("updating index in ",path)
+	//fmt.Println(parsedMessage.Resources, "---")
+	fmt.Println("updating index in ",path,"with",newID)
 	set(path, j, "application/json")
 	return
 }
@@ -109,7 +110,7 @@ func getSuccessHandler(w http.ResponseWriter, e entry) {
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := getPath(r, false)
 	e, ok := store[path]
-	fmt.Println(store)
+	fmt.Println("###", path, store, store[path])
 	if !ok {
 		w.WriteHeader(http.StatusNotFound)
 		return
@@ -123,13 +124,13 @@ func postHandler(w http.ResponseWriter, r *http.Request) {
 	
 	// generating an id and url for the new element
 	newid := idGenerator(path)
-	url := path+"/"+newid
+	url := path+"/"+strconv.Itoa(newid)
 	fmt.Println("putting new element in ",url,value)
 
 	// generating headers
 	w.Header().Add("Location", url)
 	w.WriteHeader(http.StatusCreated)
-
+  fmt.Println("----------",url)
 	set(url, value, r.Header.Get("Content-Type"))
 	w.Write(value)
 }
