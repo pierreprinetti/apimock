@@ -1,3 +1,7 @@
+_please note that this repo is under development and may not be working.
+Please see the [original one](https://github.com/pierreprinetti/apimock) for
+functioning code_
+
 # apimock
 [![Build Status](https://travis-ci.org/pierreprinetti/apimock.svg?branch=master)](https://travis-ci.org/pierreprinetti/apimock)
 [![Code Climate](https://codeclimate.com/github/pierreprinetti/apimock/badges/gpa.svg)](https://codeclimate.com/github/pierreprinetti/apimock)
@@ -51,10 +55,11 @@ It currently supports:
 - [x] `PUT`
 - [x] `GET`
 - [x] `DELETE`
+- [x] `POST` to an endpoint with fake ID generator (e.g. `POST` to 
+  `example.com/items` will result in the storage of the element in 
+  `example.com/items/1`
 - [x] `Content-Type` header
 
 What it might support in the future:
-- [ ] `POST` to an endpoint with fake ID generator (e.g. `POST` to 
-  `example.com/items` would result in the storage of the element in 
-  `example.com/items/1`
+- [ ] ID generation only for specified paths
 - [ ] listing elements if trailing slash is not present
