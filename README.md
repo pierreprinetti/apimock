@@ -23,13 +23,26 @@ _apimock_ is meant for prototyping. **Please do NOT use it in production**.
 ## Example:
 
 ```bash
+# Starting
 $ HOST=localhost:8800 apimock &
+# after creating an element with a POST its path is returned in the headers
+$ curl -i -X POST -d '{"message": "This is not a pipe"}' localhost:8800/my/endpoint
+> ...
+> Location: /my/endpoint/0
+> ...
+> {"message": "This is not a pipe"}
+# updating a non-existent element with a PUT will result in an error
 $ curl -X PUT -d '{"message": "This is not a pipe"}' localhost:8800/my/endpoint
-> {"message": "This is not a pipe"}
-$ curl -X GET localhost:8800/my/endpoint
-> {"message": "This is not a pipe"}
-$ curl -X DELETE localhost:8800/my/endpoint
-$ curl -X GET localhost:8800/my/endpoint
+>  404 Not Found
+# it is necessary to use the correct path
+$ curl -X PUT -d '{"message": "Is this  a pipe?"}' localhost:8800/my/endpoint/0
+> {"message": "Is this a pipe?"}
+# a GET works as expected
+$ curl -X GET localhost:8800/my/endpoint/0
+> {"message": "Is this a pipe?"}
+# as DELETEs do
+$ curl -X DELETE localhost:8800/my/endpoint # results in a 204
+$ curl -X GET localhost:8800/my/endpoint    # results in a 404
 $
 ```
 
