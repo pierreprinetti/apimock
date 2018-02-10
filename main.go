@@ -1,12 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 
 	"github.com/codegangsta/negroni"
-	"github.com/gorilla/mux"
 )
 
 var store map[string]entry
@@ -27,58 +27,40 @@ func set(key string, value []byte, contentType string) {
 	store[key] = entry{Value: value, ContentType: contentType}
 }
 
-func check(err error) {
-	if err != nil {
-		log.Panic(err)
-	}
-}
-
-func notImplemented(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
-	log.Println("Not implemented", path)
-
-	w.WriteHeader(http.StatusNotImplemented)
-	_, err := w.Write([]byte("Not implemented"))
-	check(err)
-}
-
 func getHandler(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
+	path := r.URL.String()
 	e, ok := store[path]
 
 	if !ok {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "Resource not found.", http.StatusNotFound)
 		return
 	}
 
 	w.Header().Set("Content-Type", e.ContentType)
 	_, err := w.Write(e.Value)
-	check(err)
-}
-
-func headHandler(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func putHandler(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
+	path := r.URL.String()
+
 	value, err := ioutil.ReadAll(r.Body)
-	check(err)
+	if err != nil {
+		log.Panic(err)
+	}
 
 	set(path, value, r.Header.Get("Content-Type"))
 
 	getHandler(w, r)
 }
 
-func postHandler(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
-}
-
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
+	path := r.URL.String()
 
 	if _, ok := store[path]; !ok {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "Resource not found.", http.StatusNotFound)
 		return
 	}
 
@@ -91,14 +73,23 @@ func optionsHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
-	router := mux.NewRouter()
-	// r.HandleFunc("/", HomeHandler)
-	router.HandleFunc("/{path:.*}", getHandler).Methods("GET")
-	router.HandleFunc("/{path:.*}", headHandler).Methods("HEAD")
-	router.HandleFunc("/{path:.*}", putHandler).Methods("PUT")
-	router.HandleFunc("/{path:.*}", postHandler).Methods("POST")
-	router.HandleFunc("/{path:.*}", deleteHandler).Methods("DELETE")
-	router.HandleFunc("/{path:.*}", optionsHandler).Methods("OPTIONS")
+	router := http.NewServeMux()
+	router.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
+		switch req.Method {
+		case http.MethodGet:
+			getHandler(rw, req)
+		case http.MethodPut:
+			putHandler(rw, req)
+		case http.MethodDelete:
+			deleteHandler(rw, req)
+		case http.MethodOptions:
+			optionsHandler(rw, req)
+		default:
+			msg := fmt.Sprintf("HTTP %s handler not implemented.", req.Method)
+			log.Println(msg)
+			http.Error(rw, msg, http.StatusNotImplemented)
+		}
+	})
 
 	n := negroni.New(negroni.NewRecovery(), newLogger(), newCors())
 	n.UseHandler(router)
