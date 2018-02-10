@@ -33,21 +33,12 @@ func check(err error) {
 	}
 }
 
-func notImplemented(w http.ResponseWriter, r *http.Request) {
-	path := mux.Vars(r)["path"]
-	log.Println("Not implemented", path)
-
-	w.WriteHeader(http.StatusNotImplemented)
-	_, err := w.Write([]byte("Not implemented"))
-	check(err)
-}
-
 func getHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
 	e, ok := store[path]
 
 	if !ok {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "Resource not found.", http.StatusNotFound)
 		return
 	}
 
@@ -57,7 +48,7 @@ func getHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func headHandler(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
 func putHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,14 +62,14 @@ func putHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func postHandler(w http.ResponseWriter, r *http.Request) {
-	notImplemented(w, r)
+	http.Error(w, "Not implemented.", http.StatusNotImplemented)
 }
 
 func deleteHandler(w http.ResponseWriter, r *http.Request) {
 	path := mux.Vars(r)["path"]
 
 	if _, ok := store[path]; !ok {
-		w.WriteHeader(http.StatusNotFound)
+		http.Error(w, "Resource not found.", http.StatusNotFound)
 		return
 	}
 
