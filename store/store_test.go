@@ -29,7 +29,7 @@ func TestStoreGet(t *testing.T) {
 	}
 
 	storeWith := func(path, body string) *Store {
-		return &Store{entries: map[string]entry{path: entry{body: []byte(body)}}}
+		return &Store{entries: map[string]entry{path: {body: []byte(body)}}}
 	}
 
 	testCases := [...]struct {
@@ -95,7 +95,7 @@ func TestStoreSet(t *testing.T) {
 	}
 
 	storeWith := func(path, body string) *Store {
-		return &Store{entries: map[string]entry{path: entry{body: []byte(body)}}}
+		return &Store{entries: map[string]entry{path: {body: []byte(body)}}}
 	}
 
 	testCases := [...]struct {
@@ -167,7 +167,7 @@ func TestStoreDel(t *testing.T) {
 	}
 
 	storeWith := func(path, body string) *Store {
-		return &Store{entries: map[string]entry{path: entry{body: []byte(body)}}}
+		return &Store{entries: map[string]entry{path: {body: []byte(body)}}}
 	}
 
 	testCases := [...]struct {
