@@ -5,8 +5,6 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/codegangsta/negroni"
 )
 
 var store map[string]entry
@@ -72,33 +70,34 @@ func optionsHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func main() {
-	router := http.NewServeMux()
-	router.HandleFunc("/", func(rw http.ResponseWriter, req *http.Request) {
-		switch req.Method {
-		case http.MethodGet:
-			getHandler(rw, req)
-		case http.MethodPut:
-			putHandler(rw, req)
-		case http.MethodDelete:
-			deleteHandler(rw, req)
-		case http.MethodOptions:
-			optionsHandler(rw, req)
-		default:
-			msg := fmt.Sprintf("HTTP %s handler not implemented.", req.Method)
-			log.Println(msg)
-			http.Error(rw, msg, http.StatusNotImplemented)
-		}
-	})
+func router(rw http.ResponseWriter, req *http.Request) {
+	switch req.Method {
+	case http.MethodGet:
+		getHandler(rw, req)
+	case http.MethodPut:
+		putHandler(rw, req)
+	case http.MethodDelete:
+		deleteHandler(rw, req)
+	case http.MethodOptions:
+		optionsHandler(rw, req)
+	default:
+		msg := fmt.Sprintf("HTTP %s handler not implemented.", req.Method)
+		log.Println(msg)
+		http.Error(rw, msg, http.StatusNotImplemented)
+	}
+}
 
-	n := negroni.New(negroni.NewRecovery(), newLogger(), newCors())
-	n.UseHandler(router)
-	n.Run(host)
+func main() {
+	apimock := http.HandlerFunc(router)
+
+	withCorsHeaders := newCors(apimock)
+	withLogging := newLogger(withCorsHeaders)
+
+	if err := http.ListenAndServe(host, withLogging); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func init() {
 	store = make(map[string]entry)
-	if overrideContentType != "" {
-
-	}
 }
