@@ -240,3 +240,14 @@ func TestDeleteHandler(t *testing.T) {
 		})
 	}
 }
+
+func TestOptionsHandler(t *testing.T) {
+	t.Run("returns 204", func(t *testing.T) {
+		req, _ := http.NewRequest("OPTIONS", "/", strings.NewReader(""))
+		rec := httptest.NewRecorder()
+		optionsHandler(rec, req)
+		if want, have := 204, rec.Code; want != have {
+			t.Errorf("expected status code %d, found %d", want, have)
+		}
+	})
+}
