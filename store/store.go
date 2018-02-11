@@ -67,7 +67,9 @@ func WithContentTypeOverride(overrideContentType string) option {
 }
 
 func New(options ...option) *Store {
-	var s Store
+	s := Store{
+		entries: make(map[string]entry),
+	}
 
 	for _, apply := range options {
 		apply(&s)
