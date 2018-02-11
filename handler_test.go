@@ -10,8 +10,10 @@ import (
 )
 
 type testrouter struct {
-	path string
-	body []byte
+	path             string
+	body             []byte
+	deleteCalledWith string
+	deleteBool       bool
 }
 
 func (tr *testrouter) Get(_ string) (http.Handler, bool) {
@@ -31,7 +33,10 @@ func (tr *testrouter) Set(path string, req *http.Request) error {
 	return err
 }
 
-func (tr *testrouter) Del(_ string) bool { return true }
+func (tr *testrouter) Del(path string) bool {
+	tr.deleteCalledWith = path
+	return tr.deleteBool
+}
 
 func TestGetHandler(t *testing.T) {
 	type checkFunc func(*httptest.ResponseRecorder) error
@@ -80,7 +85,7 @@ func TestGetHandler(t *testing.T) {
 		},
 	}
 
-	req, _ := http.NewRequest("GET", "http://foo.com/", nil)
+	req, _ := http.NewRequest("GET", "http://foo.com/", strings.NewReader(""))
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			h := getHandler(tc.store)
@@ -160,13 +165,75 @@ func TestPutHandler(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			req, _ := http.NewRequest("GET", tc.path, strings.NewReader(tc.body))
+			req, _ := http.NewRequest("PUT", tc.path, strings.NewReader(tc.body))
 			store := &testrouter{}
 			h := putHandler(store)
 			rec := httptest.NewRecorder()
 			h(rec, req)
 			for _, check := range tc.checks {
 				if err := check(store, rec); err != nil {
+					t.Error(err)
+				}
+			}
+		})
+	}
+}
+
+func TestDeleteHandler(t *testing.T) {
+	type checkFunc func(*testrouter, *httptest.ResponseRecorder) error
+	check := func(fns ...checkFunc) []checkFunc { return fns }
+
+	responseHasStatus := func(want int) checkFunc {
+		return func(_ *testrouter, rec *httptest.ResponseRecorder) error {
+			if rec.Code != want {
+				return fmt.Errorf("expected status %d, found %d", want, rec.Code)
+			}
+			return nil
+		}
+	}
+	deleteCalledWith := func(want string) checkFunc {
+		return func(router *testrouter, _ *httptest.ResponseRecorder) error {
+			if have := router.deleteCalledWith; have != want {
+				return fmt.Errorf("expected Del called with path %q, found %q", want, have)
+			}
+			return nil
+		}
+	}
+
+	tests := [...]struct {
+		name   string
+		path   string
+		store  *testrouter
+		checks []checkFunc
+	}{
+		{
+			"deletes an entry",
+			"/wow",
+			&testrouter{deleteBool: true},
+			check(
+				deleteCalledWith("/wow"),
+				responseHasStatus(204),
+			),
+		},
+		{
+			"returns 404 for unknown routes",
+			"/wow",
+			&testrouter{deleteBool: false},
+			check(
+				deleteCalledWith("/wow"),
+				responseHasStatus(404),
+			),
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _ := http.NewRequest("DELETE", tc.path, strings.NewReader(""))
+			h := deleteHandler(tc.store)
+			rec := httptest.NewRecorder()
+			h(rec, req)
+			for _, check := range tc.checks {
+				if err := check(tc.store, rec); err != nil {
 					t.Error(err)
 				}
 			}
