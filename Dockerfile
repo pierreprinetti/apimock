@@ -1,11 +1,9 @@
-FROM golang:1.9-alpine
-
-EXPOSE 80
-
+FROM golang:1.9 AS builder
 WORKDIR $GOPATH/src/github.com/pierreprinetti/apimock
-
 COPY . .
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app .
 
-RUN go build -o app
-
-ENTRYPOINT ./app
+FROM scratch
+COPY --from=builder /app ./
+EXPOSE 80
+ENTRYPOINT ["./app"]
