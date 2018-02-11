@@ -207,3 +207,43 @@ func TestStoreDel(t *testing.T) {
 		})
 	}
 }
+
+func TestWithDefaultContentType(t *testing.T) {
+	t.Run("adds the option", func(t *testing.T) {
+		var s Store
+		WithDefaultContentType("abc")(&s)
+		if want, have := "abc", s.defaultContentType; want != have {
+			t.Errorf("expected defaultContentType %q, found %q", want, have)
+		}
+	})
+}
+
+func TestWithContentTypeOverride(t *testing.T) {
+	t.Run("adds the option", func(t *testing.T) {
+		var s Store
+		WithContentTypeOverride("abc")(&s)
+		if want, have := "abc", s.overrideContentType; want != have {
+			t.Errorf("expected overrideContentType %q, found %q", want, have)
+		}
+	})
+}
+
+func TestNew(t *testing.T) {
+	t.Run("applies the provided options", func(t *testing.T) {
+		opt1 := option(func(s *Store) {
+			s.defaultContentType = "hell"
+		})
+		opt2 := option(func(s *Store) {
+			s.defaultContentType = s.defaultContentType + "o world"
+		})
+		opt3 := option(func(s *Store) {
+			s.defaultContentType = s.defaultContentType + "!"
+		})
+
+		s := New(opt1, opt2, opt3)
+
+		if want, have := "hello world!", s.defaultContentType; want != have {
+			t.Errorf("expected defaultContentType %q, found %q", want, have)
+		}
+	})
+}
