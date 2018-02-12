@@ -1,6 +1,6 @@
 # apimock
 [![Build Status](https://travis-ci.org/pierreprinetti/apimock.svg?branch=master)](https://travis-ci.org/pierreprinetti/apimock)
-[![Test Coverage](https://codeclimate.com/github/pierreprinetti/apimock/badges/coverage.svg)](https://codeclimate.com/github/pierreprinetti/apimock/coverage)
+[![Coverage Status](https://coveralls.io/repos/github/pierreprinetti/apimock/badge.svg?branch=master)](https://coveralls.io/github/pierreprinetti/apimock?branch=master)
 
 This is a very basic fake API server. I use it to build the front-end of web applications, without the need for the backend to be ready.
 
