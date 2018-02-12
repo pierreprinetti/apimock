@@ -7,12 +7,11 @@ go:
   - master
 
 install:
-  - go get golang.org/x/tools/cmd/cover
   - go get github.com/mattn/goveralls
 
 script:
-  - go test -v -covermode=count -coverprofile=coverage.out ./...
-  - goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  - go test -v  ./...
+  - goveralls -service=travis-ci -repotoken $COVERALLS_TOKEN
   - '[ -z "$(gofmt -s -l .)" ] || { gofmt -s -d -e . ; return 1; } '
 
 matrix:
