@@ -25,7 +25,7 @@ func (s *Store) Get(path string) (http.Handler, bool) {
 	defer s.RUnlock()
 
 	e, ok := s.entries[path]
-	return http.Handler(e), ok
+	return e, ok
 }
 
 // Set saves a request's data associated to a key string.
