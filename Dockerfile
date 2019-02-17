@@ -36,6 +36,16 @@ COPY --from=builder /user/group /user/passwd /etc/
 # Import the compiled executable from the first stage.
 COPY --from=builder /app /app
 
+ARG BUILD_DATE
+ARG VCS_REF
+LABEL \
+    org.label-schema.build-date=$BUILD_DATE \
+    org.label-schema.name="Apimock" \
+    org.label-schema.description="A mock API server" \
+    org.label-schema.vcs-ref=$VCS_REF \
+    org.label-schema.vcs-url="https://github.com/pierreprinetti/apimock" \
+    org.label-schema.schema-version="1.0"
+
 # Declare the port on which the webserver will be exposed.
 # As we're going to run the executable as an unprivileged user, we can't bind
 # to ports below 1024.
