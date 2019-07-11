@@ -39,12 +39,15 @@ COPY --from=builder /app /app
 ARG BUILD_DATE
 ARG VCS_REF
 LABEL \
-    org.label-schema.build-date=$BUILD_DATE \
-    org.label-schema.name="Apimock" \
-    org.label-schema.description="A mock API server" \
-    org.label-schema.vcs-ref=$VCS_REF \
-    org.label-schema.vcs-url="https://github.com/pierreprinetti/apimock" \
-    org.label-schema.schema-version="1.0"
+    org.opencontainers.image.created=$BUILD_DATE \
+    org.opencontainers.image.authors="https://pierreprinetti.com" \
+    org.opencontainers.image.url="https://hub.docker.com/r/pierreprinetti/apimock/" \
+    org.opencontainers.image.source="https://github.com/pierreprinetti/apimock" \
+    org.opencontainers.image.version=$VCS_REF \
+    org.opencontainers.image.revision=$VCS_REF \
+    org.opencontainers.image.ref.name="apimock" \
+    org.opencontainers.image.title="apimock" \
+    org.opencontainers.image.description="A mock API server"
 
 # Declare the port on which the webserver will be exposed.
 # As we're going to run the executable as an unprivileged user, we can't bind
