@@ -45,7 +45,6 @@ LABEL \
     org.opencontainers.image.source="https://github.com/pierreprinetti/apimock" \
     org.opencontainers.image.version=$VCS_REF \
     org.opencontainers.image.revision=$VCS_REF \
-    org.opencontainers.image.ref.name="apimock" \
     org.opencontainers.image.title="apimock" \
     org.opencontainers.image.description="A mock API server"
 

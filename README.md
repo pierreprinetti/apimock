@@ -1,6 +1,5 @@
 # apimock
 [![Go Report Card](https://goreportcard.com/badge/github.com/pierreprinetti/apimock)](https://goreportcard.com/report/github.com/pierreprinetti/apimock)
-[![Coverage Status](https://coveralls.io/repos/github/pierreprinetti/apimock/badge.svg?branch=master)](https://coveralls.io/github/pierreprinetti/apimock?branch=master)
 [![Build Status](https://travis-ci.org/pierreprinetti/apimock.svg?branch=master)](https://travis-ci.org/pierreprinetti/apimock)
 
 This is a very basic fake API server. I use it to build the front-end of web applications, without the need for the backend to be ready.

@@ -2,16 +2,12 @@ language: go
 
 go:
   - '1.8'
-  - '1.10.x'
+  - '1.12.x'
   - 1.x
   - master
 
-install:
-  - go get github.com/mattn/goveralls
-
 script:
   - go test -v  ./...
-  - goveralls -service=travis-ci -repotoken $COVERALLS_TOKEN
   - '[ -z "$(gofmt -s -l .)" ] || { gofmt -s -d -e . ; return 1; } '
 
 matrix:
