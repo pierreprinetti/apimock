@@ -5,31 +5,52 @@ import (
 	"net/http"
 	"os"
 	"time"
-
-	"github.com/codegangsta/negroni"
 )
 
-// Logger is a middleware handler that logs the request as it goes in and the response as it goes out.
+// Logger is a middleware handler that logs HTTP call information.
 type Logger struct {
 	// Logger inherits from log.Logger used to log messages with the Logger middleware
 	*log.Logger
+	next http.Handler
 }
 
 // newLogger returns a new Logger instance
-func newLogger() *Logger {
-	return &Logger{log.New(os.Stdout, "[apimock] ", 3)}
+func newLogger(next http.Handler) *Logger {
+	return &Logger{
+		Logger: log.New(os.Stdout, "[apimock] ", 3),
+		next:   next,
+	}
 }
 
-func (l *Logger) ServeHTTP(rw http.ResponseWriter, req *http.Request, next http.HandlerFunc) {
-	start := time.Now()
-	// l.Printf("Started %s %s", r.Method, r.URL.Path)
+type responseWriterRecorder struct {
+	http.ResponseWriter
 
-	next(rw, req)
+	status int
+}
 
-	res := rw.(negroni.ResponseWriter)
-	address := req.Header.Get("X-REAL-IP")
-	if address == "" {
-		address = req.RemoteAddr
+func (rr *responseWriterRecorder) WriteHeader(code int) {
+	rr.status = code
+	rr.ResponseWriter.WriteHeader(code)
+}
+
+func (rr *responseWriterRecorder) Write(b []byte) (int, error) {
+	if rr.status == 0 {
+		rr.status = 200
 	}
-	l.Printf("%s %s %v %s in %v (%v)", req.Method, req.URL.Path, res.Status(), http.StatusText(res.Status()), time.Since(start), address)
+	return rr.ResponseWriter.Write(b)
+}
+
+func (l *Logger) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	start := time.Now()
+
+	rr := &responseWriterRecorder{ResponseWriter: rw}
+
+	l.next.ServeHTTP(rr, req)
+
+	address := req.RemoteAddr
+	if realIP := req.Header.Get("X-REAL-IP"); realIP != "" {
+		address = realIP
+	}
+
+	l.Printf("%s %s %d %s in %v (%s)", req.Method, req.URL.Path, rr.status, http.StatusText(rr.status), time.Since(start), address)
 }

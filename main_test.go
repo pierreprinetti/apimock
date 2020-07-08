@@ -3,96 +3,156 @@ package main
 import (
 	"io/ioutil"
 	"net/http"
-	"net/http/httptest"
 	"os"
 	"strings"
 	"testing"
+	"time"
 )
 
-var HandlerGen map[string]func(http.ResponseWriter, *http.Request)
+// Integration test
+func TestMain(t *testing.T) {
+	t.Run("complete PUT-GET-DELETE-GET cycle", func(t *testing.T) {
 
-func doATest(t *testing.T, method, endpoint string, statuscode int,
-	reqBody string, resBody string) *http.Response {
-	r := httptest.NewRequest(method, endpoint, strings.NewReader(reqBody))
-	w := httptest.NewRecorder()
+		// Run the application
+		srvAddr := "localhost:29109"
+		os.Setenv("HOST", srvAddr)
+		defer os.Unsetenv("HOST")
 
-	HandlerGen[method](w, r)
-	resp := w.Result()
-	body, _ := ioutil.ReadAll(resp.Body)
-	if resp.StatusCode != statuscode {
-		t.Errorf("%q - %q\nStatus code is %d instead of %d", method, endpoint,
-			resp.StatusCode, statuscode)
-	}
-	if string(body) != resBody {
-		t.Errorf("%q - %q\nReturning %q instead of %q", method, endpoint,
-			string(body), resBody)
-	}
-	return resp
-}
+		go func() {
+			main()
+		}()
 
-func assert(t *testing.T, what, expected, given string) {
-	if expected != given {
-		t.Errorf("Wrong " + what + ": expected " + expected + " but given " + given)
-	}
-}
+		// Make sure that the http listener is in place
+		time.Sleep(time.Millisecond)
 
-func TestGetHandler(t *testing.T) {
+		// Define the data that will be sent and the expected
+		targetEndpoint := "http://" + srvAddr + "/endpoint1"
+		expectedBody := "yay"
+		expectedContentType := "WUARGH"
 
-	_ = doATest(t, "GET", "/", 404, "", "")
-	_ = doATest(t, "GET", "/an_endpoint", 404, "", "")
-	_ = doATest(t, "GET", "/an_endpoint/", 404, "", "")
-}
+		// Perform the PUT call
+		var client http.Client
+		req, _ := http.NewRequest("PUT", targetEndpoint, strings.NewReader(expectedBody))
+		req.Header.Set("Content-Type", expectedContentType)
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("calling PUT: %v", err)
+		}
 
-func TestPostHandler(t *testing.T) {
-	body := `{"this":"is an example"}`
-	resBody := `{"this":"is an example"}`
-	url := "/my/endpoint"
-	r := doATest(t, "POST", url, 201, body, resBody)
-	assert(t, "location", r.Header.Get("location"), url+"/0")
-	resBody2 := `{"this":"is an example2"}`
-	body = resBody2
-	r = doATest(t, "POST", url, 201, body, resBody2)
-	assert(t, "location", r.Header.Get("location"), url+"/1")
-	// not so beautiful: this obviously depends from TestGetHandler to work
-	_ = doATest(t, "GET", "/my/endpoint/0", 200, "", resBody)
-	_ = doATest(t, "GET", "/my/endpoint/1", 200, "", resBody2)
+		// Test the PUT response code
+		if want, have := 200, res.StatusCode; want != have {
+			t.Errorf("expected PUT response status code %d, found %d", want, have)
+		}
 
-	resourcesBody := `{"Resources":[0,1]}`
-	_ = doATest(t, "GET", "/my/endpoint", 200, "", resourcesBody)
-}
+		// Perform the GET call
+		res, err = http.Get(targetEndpoint)
+		if err != nil {
+			t.Fatalf("calling GET: %v", err)
+		}
 
-func TestPutHandler(t *testing.T) {
-	body := `{"this":"was an example, now it is a test"}`
-	res := doATest(t, "PUT", "/my/endpoint/0", 200, body, body)
-	assert(t, "PUT location", "/my/endpoint/0", res.Header.Get("location"))
-	_ = doATest(t, "PUT", "/my/endpoint/8000", 404, body, "")
-}
+		// Test the GET response code
+		if want, have := 200, res.StatusCode; want != have {
+			t.Errorf("expected GET response status code %d, found %d", want, have)
+		}
 
-func TestDeleteHandler(t *testing.T) {
-	body := `{"this":"is an example, now it will be created"}`
-	baseURL := "/just/an/endpoint"
-	res0 := doATest(t, "POST", baseURL, 201, body, body)
-	res := doATest(t, "POST", baseURL, 201, body, body)
-	resBody := `{"Resources":[0,1]}`
-	_ = doATest(t, "GET", baseURL, 200, "", resBody)
-	loc := res.Header.Get("location")
-	_ = doATest(t, "GET", loc, 200, body, body)
-	_ = doATest(t, "DELETE", baseURL, 405, "", "")
-	_ = doATest(t, "DELETE", baseURL+"/", 405, "", "")
-	_ = doATest(t, "DELETE", loc, 204, "", "")
-	resBody = `{"Resources":[0]}`
-	_ = doATest(t, "GET", baseURL, 200, "", resBody)
-	loc0 := res0.Header.Get("location")
-	_ = doATest(t, "DELETE", loc0, 204, "", "")
-	resBody = `{"Resources":[]}`
-	_ = doATest(t, "GET", "/just/an/endpoint", 200, "", resBody)
-}
+		// Test the GET response body
+		body, err := ioutil.ReadAll(res.Body)
+		if err != nil {
+			t.Fatalf("reading the GET response body: %v", err)
+		}
 
-func TestMain(m *testing.M) {
-	HandlerGen = make(map[string]func(http.ResponseWriter, *http.Request))
-	HandlerGen["GET"] = getHandler
-	HandlerGen["POST"] = postHandler
-	HandlerGen["PUT"] = putHandler
-	HandlerGen["DELETE"] = deleteHandler
-	os.Exit(m.Run())
+		if want, have := expectedBody, string(body); want != have {
+			t.Errorf("expected GET response body %q, found %q", want, have)
+		}
+
+		// Test the GET response content-type
+		if want, have := expectedContentType, res.Header.Get("Content-Type"); want != have {
+			t.Errorf("expected GET response content-type %q, found %q", want, have)
+		}
+
+		// Perform the DELETE call
+		req, _ = http.NewRequest("DELETE", targetEndpoint, nil)
+		res, err = client.Do(req)
+		if err != nil {
+			t.Fatalf("calling DELETE: %v", err)
+		}
+
+		// Test the DELETE response code
+		if want, have := 204, res.StatusCode; want != have {
+			t.Errorf("expected DELETE response status code %d, found %d", want, have)
+		}
+
+		// Perform a GET call to check if the resource has been deleted
+		res, err = http.Get(targetEndpoint)
+		if err != nil {
+			t.Fatalf("calling GET: %v", err)
+		}
+
+		// Test the GET response code
+		if want, have := 404, res.StatusCode; want != have {
+			t.Errorf("expected GET response status code %d, found %d", want, have)
+		}
+	})
+
+	t.Run("OPTIONS call", func(t *testing.T) {
+
+		// Run the application
+		srvAddr := "localhost:29108"
+		os.Setenv("HOST", srvAddr)
+		defer os.Unsetenv("HOST")
+
+		go func() {
+			main()
+		}()
+
+		// Make sure that the http listener is in place
+		time.Sleep(time.Millisecond)
+
+		// Define the data that will be sent and the expected
+		targetEndpoint := "http://" + srvAddr + "/endpoint2"
+
+		// Perform the OPTIONS call
+		var client http.Client
+		req, _ := http.NewRequest("OPTIONS", targetEndpoint, nil)
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("calling OPTIONS: %v", err)
+		}
+
+		// Test the response code
+		if want, have := 204, res.StatusCode; want != have {
+			t.Errorf("expected response status code %d, found %d", want, have)
+		}
+	})
+
+	t.Run("POST call not implemented", func(t *testing.T) {
+
+		// Run the application
+		srvAddr := "localhost:29110"
+		os.Setenv("HOST", srvAddr)
+		defer os.Unsetenv("HOST")
+
+		go func() {
+			main()
+		}()
+
+		// Make sure that the http listener is in place
+		time.Sleep(time.Millisecond)
+
+		// Define the data that will be sent and the expected
+		targetEndpoint := "http://" + srvAddr + "/endpoint3"
+
+		// Perform the OPTIONS call
+		var client http.Client
+		req, _ := http.NewRequest("POST", targetEndpoint, nil)
+		res, err := client.Do(req)
+		if err != nil {
+			t.Fatalf("calling POST: %v", err)
+		}
+
+		// Test the response code
+		if want, have := 501, res.StatusCode; want != have {
+			t.Errorf("expected response status code %d, found %d", want, have)
+		}
+	})
 }
