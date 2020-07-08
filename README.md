@@ -30,7 +30,7 @@ Apimock will remember the `Content-Type` associated with every request. This beh
 
 ## Docker container
 
-    docker run --name apimock -p 8800:80 -d pierreprinetti/apimock:latest
+    docker run --name apimock -p 8800:8800 -d pierreprinetti/apimock:latest
 
 ## Features
 
