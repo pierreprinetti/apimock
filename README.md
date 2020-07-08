@@ -13,7 +13,7 @@ _apimock_ is meant for prototyping. **Please do NOT use it in production**.
 
 ## Example:
 
-    $ HOST=localhost:8800 apimock &
+    $ HOST=localhost:8800 apimock & # same as PORT=8800 apimock &
     $ curl -X PUT -d '{"message": "This is not a pipe"}' localhost:8800/my/endpoint
     > {"message": "This is not a pipe"}
     $ curl -X GET localhost:8800/my/endpoint
@@ -30,7 +30,7 @@ Apimock will remember the `Content-Type` associated with every request. This beh
 
 ## Docker container
 
-    docker run --name apimock -p 8800:80 -d pierreprinetti/apimock:latest
+    docker run --name apimock -p 8800:8800 -d pierreprinetti/apimock:latest
 
 ## Features
 

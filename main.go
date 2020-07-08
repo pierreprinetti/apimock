@@ -42,7 +42,9 @@ func main() {
 	withCorsHeaders := newCors(apimock)
 	withLogging := newLogger(withCorsHeaders)
 
-	if err := http.ListenAndServe(getenv("HOST", ":80"), withLogging); err != nil {
+	if err := http.ListenAndServe(
+		getenv("HOST", ":"+getenv("PORT", "8800")),
+		withLogging); err != nil {
 		log.Fatal(err)
 	}
 }
