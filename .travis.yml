@@ -2,9 +2,8 @@ language: go
 
 go:
   - '1.8'
-  - '1.12.x'
-  - 1.x
-  - master
+  - '1.14'
+  - 'tip'
 
 script:
   - go test -v  ./...
@@ -12,4 +11,4 @@ script:
 
 matrix:
   allow_failures:
-    - go: master
+    - go: tip
